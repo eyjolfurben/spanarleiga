@@ -31,7 +31,7 @@
       <h3>3) Fjöldi gesta</h3>
       <label>Fjöldi gesta (hámark 5)</label>
       <select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select>
-      <label>Séróskir (valkvætt)</label><textarea id="notes" rows="3" placeholder="T.d. vöggu, seinn check‑in, o.s.frv."></textarea>
+      <label>Séróskir (valkvætt)</label><textarea id="notes" rows="3" placeholder="T.d. vöggu, seinn check-in, o.s.frv."></textarea>
       <label class="checkbox"><input type="checkbox" id="agree"><span>Ég samþykki <a href="terms.html" target="_blank">skilmála</a> og staðfesti að upplýsingar séu réttar.</span></label>
     </section>
   </div>
@@ -66,13 +66,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/is.js"></script>
+<!-- Lesum stillingar (APP_ENDPOINT) -->
+<script src="/config.js?v=1"></script>
+
 <script>
+/* ====== Dagatal + verð ====== */
 const ICS_URL = "https://calendar.google.com/calendar/ical/0139025d6a6c070428e029d913db214eb14bb67c527d9588416b67afd4efb0aa%40group.calendar.google.com/public/basic.ics";
 const CLEANING_FEE = 140;
 const LONG_STAY_NIGHTS = 14;
 const LONG_STAY_DISCOUNT_PCT = 5;
 
-// Init picker immediately so input always opens
+// Init picker
 const fp = flatpickr('#dateRange', {
   mode:'range', minDate:'today', dateFormat:'Y-m-d',
   locale: 'is', altInput: true, altFormat: 'j. F Y'
@@ -122,18 +126,23 @@ document.getElementById('dateRange').addEventListener('change', ()=>{
   }
 });
 
-document.getElementById('requestBtn').addEventListener('click', ()=>{
+/* ====== Senda beint á Google Apps Script (Vercel) ====== */
+document.getElementById('requestBtn').addEventListener('click', async ()=>{
   const errs=[];
   if(!window.__range) errs.push('Veldu dagsetningar.');
   const name=document.getElementById('fullName').value.trim();
   const email=document.getElementById('email').value.trim();
   const phone=document.getElementById('phone').value.trim();
-  if(!name) errs.push('Vantar fullt nafn.'); if(!email) errs.push('Vantar netfang.'); if(!phone) errs.push('Vantar símanúmer.');
+  if(!name) errs.push('Vantar fullt nafn.');
+  if(!email) errs.push('Vantar netfang.');
+  if(!phone) errs.push('Vantar símanúmer.');
   if(!document.getElementById('agree').checked) errs.push('Þú þarft að samþykkja skilmála.');
   document.getElementById('errors').textContent = errs.join(' ');
   if(errs.length) return;
 
-  const [s,e]=window.__range; const price=calcPrice(s,e);
+  const [s,e]=window.__range; 
+  const price=calcPrice(s,e);
+
   const params = new URLSearchParams({
     from: dayKey(s), to: dayKey(e),
     name, email, phone,
@@ -145,57 +154,41 @@ document.getElementById('requestBtn').addEventListener('click', ()=>{
     notes: document.getElementById('notes').value.trim(),
     total: price.total
   });
-  // Static Netlify form: fyllum reitina og sendum URL-encoded
-  const set=(id,v)=>document.getElementById(id).value=v;
-  set('f_fullName', name);
-  set('f_email', email);
-  set('f_phone', phone);
-  set('f_children', document.getElementById('children').value);
-  set('f_flight', document.getElementById('flight').value.trim());
-  set('f_country', document.getElementById('country').value.trim());
-  set('f_eta', document.getElementById('eta').value.trim());
-  set('f_dates', dayKey(s)+' → '+dayKey(e));
-  set('f_guests', document.getElementById('guests').value);
-  set('f_nights', price.nights);
-  set('f_lodging', price.lodging);
-  set('f_cleaning', price.cleaning);
-  set('f_discount', price.discount);
-  set('f_total', price.total);
-  set('f_notes', document.getElementById('notes').value.trim());
-  set('f_approvalLink', location.origin + '/approve.html?' + params.toString());
+  const approvalLink = location.origin + '/approve.html?' + params.toString();
 
-  const form = document.forms['booking'];
-  const fd = new FormData(form);
-  fetch("/", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams(fd).toString()
-  })
-  .then(()=>{ window.location.href = "/thanks/"; })
-  .catch(()=>{ const box=document.getElementById('inline-success'); if(box){ box.style.display='block'; scrollTo(0,0);} });
+  const payload = {
+    action:   'request',
+    from:     dayKey(s),
+    to:       dayKey(e),
+    name, email, phone,
+    children: document.getElementById('children').value,
+    flight:   document.getElementById('flight').value.trim(),
+    guests:   document.getElementById('guests').value,
+    country:  document.getElementById('country').value.trim(),
+    eta:      document.getElementById('eta').value.trim(),
+    notes:    document.getElementById('notes').value.trim(),
+    nights:   price.nights,
+    lodging:  price.lodging,
+    cleaning: price.cleaning,
+    discount: price.discount,
+    total:    price.total,
+    approvalLink
+  };
+
+  try {
+    const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
+    if (!EP) throw new Error('APP_ENDPOINT vantar í config.js');
+    await fetch(EP, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    window.location.href = '/thanks/';
+  } catch (e) {
+    console.error(e);
+    const box=document.getElementById('inline-success'); 
+    if(box){ box.style.display='block'; scrollTo(0,0); }
+  }
 });
 </script>
-
-<!-- Static Netlify form (detected at deploy) -->
-<form name="booking" method="POST" netlify netlify-honeypot="bot-field" action="/thanks/" hidden>
-  <input type="hidden" name="form-name" value="booking">
-  <input type="text" name="bot-field">
-  <input type="hidden" name="status"       id="f_status" value="pending">
-  <input type="hidden" name="fullName"     id="f_fullName">
-  <input type="hidden" name="email"        id="f_email">
-  <input type="hidden" name="phone"        id="f_phone">
-  <input type="hidden" name="children"     id="f_children">
-  <input type="hidden" name="flight"       id="f_flight">
-  <input type="hidden" name="country"      id="f_country">
-  <input type="hidden" name="eta"          id="f_eta">
-  <input type="hidden" name="dates"        id="f_dates">
-  <input type="hidden" name="guests"       id="f_guests">
-  <input type="hidden" name="nights"       id="f_nights">
-  <input type="hidden" name="lodging"      id="f_lodging">
-  <input type="hidden" name="cleaning"     id="f_cleaning">
-  <input type="hidden" name="discount"     id="f_discount">
-  <input type="hidden" name="total"        id="f_total">
-  <input type="hidden" name="notes"        id="f_notes">
-  <input type="hidden" name="approvalLink" id="f_approvalLink">
-</form>
 </body></html>
