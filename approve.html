@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Samþykki bókunar</title>
   <link rel="stylesheet" href="style.css">
-  <!-- hleðum config.js með cache-buster og tryggjum að hún hlaðist áður -->
   <script src="/config.js?v=1" defer></script>
 </head>
 <body>
@@ -24,32 +23,28 @@
   </main>
 
   <script>
-  const qs   = new URLSearchParams(location.search);
-  const data = Object.fromEntries(qs.entries());
+    const qs   = new URLSearchParams(location.search);
+    const data = Object.fromEntries(qs.entries());
 
-  document.getElementById('info').innerHTML =
-    Object.entries(data).map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
+    document.getElementById('info').innerHTML =
+      Object.entries(data).map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
 
-  document.getElementById('approve').onclick = async () => {
-    const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
-    if (!EP) { alert('APP_ENDPOINT vantar í config.js'); return; }
+    document.getElementById('approve').onclick = async () => {
+      const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
+      if (!EP) { alert('APP_ENDPOINT vantar í config.js'); return; }
+      const payload = { action:'approve', ...data };
 
-    const payload = { action: 'approve', ...data };
+      const res = await fetch(EP, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).then(r=>r.text()).catch(e=>String(e));
 
-    const res = await fetch(EP, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify(payload)
-    }).then(r=>r.text()).catch(String);
+      document.getElementById('result').innerHTML = '<span class="good">Sent ✔</span> ' + res;
+    };
 
-    document.getElementById('result').innerHTML =
-      '<span class="good">Sent ✔</span> ' + res;
-  };
-
-  document.getElementById('reject').onclick = () => {
-    document.getElementById('result').innerHTML = '<span class="bad">Hafnað</span>';
-  };
-</script>
-
+    document.getElementById('reject').onclick = () => {
+      document.getElementById('result').innerHTML = '<span class="bad">Hafnað</span>';
+    };
+  </script>
 </body>
 </html>
