@@ -1,0 +1,3 @@
+// Google Apps Script Web App (deploy as 'Anyone')
+const CALENDAR_ID='0139025d6a6c070428e029d913db214eb14bb67c527d9588416b67afd4efb0aa@group.calendar.google.com';
+function doPost(e){const data=JSON.parse(e.postData.contents||'{}');if(data.action!=='approve')return ContentService.createTextOutput('ignored');const start=new Date(data.from+'T00:00:00Z');const end=new Date(data.to+'T00:00:00Z');const cal=CalendarApp.getCalendarById(CALENDAR_ID);cal.createAllDayEvent('Bókað – '+(data.name||''),start,end,{description:'Gestir: '+(data.guests||'')+'\nNetfang: '+(data.email||'')+'\nSími: '+(data.phone||'')+'\nAth.: '+(data.notes||'')});return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}

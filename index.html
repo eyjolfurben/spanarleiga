@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="is">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>La Zenia – Þakíbúð</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="hero" style="background-image:url('images/photo1.jpg')">
+  <div class="hero-overlay"><div class="hero-inner">
+    <h1>La Zenia – Þakíbúð</h1>
+    <p class="small">Fullbúin þakíbúð beint á móti La&nbsp;Zenia Mall. Sundlaug, garður og sólverönd 🌴 Fullkomin fyrir fjölskyldur eða pör sem vilja njóta Costa&nbsp;Blanca 🌞</p>
+    <div class="cta-row"><a class="btn" href="book.html">Bóka núna</a> <a class="btn out" href="terms.html">Skilmálar</a></div>
+  </div></div>
+</header>
+<main class="container">
+  <section class="grid-2">
+    <div class="card">
+      <h2>Verðskrá</h2>
+      <ul>
+        <li><b>Maí – september:</b> 130 € / nótt</li>
+        <li><b>Október – apríl:</b> 90 € / nótt</li>
+        <li><b>Jól & páskar:</b> sumarverð gildir</li>
+        <li><b>Þrifagjald:</b> 140 € <span class="muted">(greitt við brottför)</span></li>
+        <li><b>Trygging:</b> 400 € <span class="muted">(greitt við komu, endurgreitt við brottför)</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Myndir</h2>
+      <div class="gallery lightbox"><img src="images/photo1.jpg" alt="Mynd 1">
+<img src="images/photo2.jpg" alt="Mynd 2">
+<img src="images/photo3.jpg" alt="Mynd 3">
+<img src="images/photo4.jpg" alt="Mynd 4">
+<img src="images/photo5.jpg" alt="Mynd 5">
+<img src="images/photo6.jpg" alt="Mynd 6">
+<img src="images/photo7.jpg" alt="Mynd 7">
+<img src="images/photo8.jpg" alt="Mynd 8">
+<img src="images/photo9.jpg" alt="Mynd 9">
+<img src="images/photo10.jpg" alt="Mynd 10"></div>
+      <p class="muted small">Smelltu á mynd til að stækka – örvalyklar virka.</p>
+    </div>
+  </section>
+</main>
+<footer class="footer"><div class="container small">© 2025 La Zenia – Þakíbúð • <a href="terms.html">Skilmálar</a></div></footer>
+
+<!-- Lightbox -->
+<div id="lb" class="lb" aria-hidden="true">
+  <button class="lb-close" aria-label="Loka">×</button>
+  <button class="lb-prev" aria-label="Fyrri">‹</button>
+  <img id="lb-img" alt="Stækkuð mynd">
+  <button class="lb-next" aria-label="Næsta">›</button>
+</div>
+<script>
+const images = Array.from(document.querySelectorAll('.lightbox img'));
+let ix = 0; const lb = document.getElementById('lb'); const img = document.getElementById('lb-img');
+const openAt = i => { ix=i; img.src=images[ix].src; lb.setAttribute('aria-hidden','false'); };
+images.forEach((im,i)=> im.addEventListener('click',()=>openAt(i)));
+document.querySelector('.lb-close').onclick=()=> lb.setAttribute('aria-hidden','true');
+document.querySelector('.lb-prev').onclick=()=> openAt((ix-1+images.length)%images.length);
+document.querySelector('.lb-next').onclick=()=> openAt((ix+1)%images.length);
+lb.addEventListener('click',e=>{ if(e.target===lb) lb.setAttribute('aria-hidden','true'); });
+addEventListener('keydown',e=>{ if(lb.getAttribute('aria-hidden')==='true') return; if(e.key==='Escape') lb.setAttribute('aria-hidden','true'); if(e.key==='ArrowLeft') document.querySelector('.lb-prev').click(); if(e.key==='ArrowRight') document.querySelector('.lb-next').click(); });
+</script>
+</body></html>

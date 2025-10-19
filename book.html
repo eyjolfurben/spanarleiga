@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="is"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bóka dvöl – La Zenia</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head><body>
+<nav class="topbar"><a href="index.html" class="brand">La Zenia</a><a href="terms.html" class="btn out small">Skilmálar</a></nav>
+<main class="container"><h1>Bóka dvöl</h1>
+<div class="grid-2">
+  <div>
+    <section class="card" id="box-dates">
+      <h3>1) Dagsetningar</h3>
+      <label>Veldu dagsetningar</label>
+      <input id="dateRange" type="text" placeholder="(21. janúar 2025 – 4. febrúar 2025)">
+      <div class="muted small">Uppteknir dagar eru læstir í dagatalinu.</div>
+    </section>
+
+    <section class="card" id="box-info">
+      <h3>2) Þínar upplýsingar</h3>
+      <label>Fullt nafn</label><input id="fullName" type="text" placeholder="Fornafn Eftirnafn">
+      <label>Netfang</label><input id="email" type="email" placeholder="þitt@netfang.is">
+      <label>Símanúmer</label><input id="phone" type="tel" placeholder="+354 555 1234">
+      <label>Fjöldi barna (valkvætt)</label><select id="children"><option value="0" selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      <label>Flugnúmer (valkvætt)</label><input id="flight" type="text" placeholder="t.d. FI532">
+      <label>Búsetuland (valkvætt)</label><input id="country" type="text" placeholder="Ísland / ...">
+      <label>Áætlaður komutími (valkvætt)</label><input id="eta" type="text" placeholder="t.d. eftir kl. 16:00">
+    </section>
+
+    <section class="card" id="box-guests">
+      <h3>3) Fjöldi gesta</h3>
+      <label>Fjöldi gesta (hámark 5)</label>
+      <select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select>
+      <label>Séróskir (valkvætt)</label><textarea id="notes" rows="3" placeholder="T.d. vöggu, seinn check‑in, o.s.frv."></textarea>
+      <label class="checkbox"><input type="checkbox" id="agree"><span>Ég samþykki <a href="terms.html" target="_blank">skilmála</a> og staðfesti að upplýsingar séu réttar.</span></label>
+    </section>
+  </div>
+
+  <div class="card">
+    <h2>Verðútreikningur</h2>
+    <div class="totals">
+      <div class="line"><span>Nætur</span><strong id="nights">0</strong></div>
+      <div class="line"><span>Húsnæði</span><strong id="lodging">0 €</strong></div>
+      <div class="line"><span>Þrifagjald <span class="muted">(greitt við brottför)</span></span><strong id="cleaning">0 €</strong></div>
+      <div class="line"><span>Afsláttur (ef á við)</span><strong id="discount">0 €</strong></div>
+      <div class="total">Samtals: <span id="total">0 €</span></div>
+      <div class="line small"><span>Trygging (endurgreidd) <span class="muted">(greitt við komu)</span></span><strong id="deposit">400 €</strong></div>
+      <div id="availability" class="muted"></div>
+    </div>
+    <div id="breakdown" class="muted small"></div>
+    <div id="errors" class="bad small"></div>
+    <div class="spacer"></div>
+    <button id="requestBtn" class="btn" disabled>Sendja bókunarbeiðni</button>
+    <p class="muted small">Beiðnir eru <i>í bið</i> þar til staðfestar. Með samþykkt eru dagsetningar skráðar í dagatalið.</p>
+  </div>
+</div>
+
+<div id="inline-success" class="card" style="display:none;margin-top:12px">
+  <h2>Takk fyrir bókun ✨</h2>
+  <p>Við höfum móttekið bókunarbeiðnina. Við staðfestum hana fljótlega með tölvupósti.</p>
+  <a class="btn" href="/index.html">Til baka á forsíðu</a>
+</div>
+
+</main>
+<footer class="footer"><div class="container small">© 2025 La Zenia – Þakíbúð</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/is.js"></script>
+<script>
+const ICS_URL = "https://calendar.google.com/calendar/ical/0139025d6a6c070428e029d913db214eb14bb67c527d9588416b67afd4efb0aa%40group.calendar.google.com/public/basic.ics";
+const CLEANING_FEE = 140;
+const LONG_STAY_NIGHTS = 14;
+const LONG_STAY_DISCOUNT_PCT = 5;
+
+// Init picker immediately so input always opens
+const fp = flatpickr('#dateRange', {
+  mode:'range', minDate:'today', dateFormat:'Y-m-d',
+  locale: 'is', altInput: true, altFormat: 'j. F Y'
+});
+
+const euro=n=> new Intl.NumberFormat('is-IS',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Math.round(n));
+const dayKey = d => d.toISOString().slice(0,10);
+const addDays = (d,n)=>{ const x=new Date(d); x.setUTCDate(x.getUTCDate()+n); return x; };
+const diffDays = (a,b)=> Math.max(0, Math.round((b-a)/86400000));
+
+function easterSunday(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),M=Math.floor((h+l-7*m+114)/31),D=((h+l-7*m+114)%31)+1; return new Date(Date.UTC(y,M-1,D)); }
+function isWithinEaster(d){ const y=d.getUTCFullYear(),e=easterSunday(y),thu=new Date(Date.UTC(y,e.getUTCMonth(),e.getUTCDate()-3)),mon=new Date(Date.UTC(y,e.getUTCMonth(),e.getUTCDate()+1)); return d>=thu&&d<=mon; }
+function basePriceForDate(d){ const m=d.getUTCMonth()+1,day=d.getUTCDate(); const md=(String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0')); if(md>='12-20'||md<='01-05') return 130; if(isWithinEaster(d)) return 130; if(m>=5&&m<=9) return 130; return 90; }
+
+let disabledDates = new Set(), blocked = [];
+function parseICSDate(val){ if(/^\d{8}$/.test(val)){ const y=+val.slice(0,4), m=+val.slice(4,6)-1, d=+val.slice(6,8); return new Date(Date.UTC(y,m,d)); }
+  const m=val.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/); if(m) return new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])); return new Date(val); }
+
+async function loadICS(){ try{
+  const text = await (await fetch(ICS_URL)).text();
+  const events = text.split('BEGIN:VEVENT').slice(1);
+  for(const ev of events){
+    const ds = (ev.match(/DTSTART.*:(.+)\r?\n/)||[])[1];
+    const de = (ev.match(/DTEND.*:(.+)\r?\n/)||[])[1];
+    if(!ds||!de) continue;
+    const s=parseICSDate(ds), e=parseICSDate(de);
+    for(let d=new Date(s); d<e; d=addDays(d,1)){ disabledDates.add(dayKey(d)); }
+    blocked.push([s,e]);
+  }
+  fp.set('disable', [ function(date){ const key=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate())).toISOString().slice(0,10); return disabledDates.has(key);} ]);
+} catch(e){ console.error(e); } }
+loadICS();
+
+function isFree(s,e){ for(const [bs,be] of blocked){ if(s<be && e>bs) return false; } return true; }
+function calcPrice(s,e){ const nights=diffDays(s,e); if(!nights) return {nights:0,lodging:0,cleaning:0,discount:0,total:0,per:[]}; let lodging=0, per=[]; for(let i=0;i<nights;i++){ const d=addDays(s,i); const p=basePriceForDate(d); lodging+=p; per.push([dayKey(d),p]); } let discount = nights>=LONG_STAY_NIGHTS ? lodging*(LONG_STAY_DISCOUNT_PCT/100):0; const cleaning=CLEANING_FEE; const total=Math.max(0,lodging-discount+cleaning); return {nights,lodging,cleaning,discount,total,per}; }
+function render(price){ document.getElementById('nights').textContent=price.nights; document.getElementById('lodging').textContent=euro(price.lodging); document.getElementById('cleaning').textContent=euro(price.cleaning); document.getElementById('discount').textContent= price.discount?('– '+euro(price.discount)):euro(0); document.getElementById('total').textContent=euro(price.total); const lines=price.per.map(([d,p])=>d+': '+euro(p)).join('<br>'); document.getElementById('breakdown').innerHTML= lines?('<div class=spacer></div>'+lines):''; }
+
+document.getElementById('dateRange').addEventListener('change', ()=>{
+  const sel = fp.selectedDates;
+  if(sel.length===2){
+    const s=new Date(Date.UTC(sel[0].getFullYear(),sel[0].getMonth(),sel[0].getDate()));
+    const e=new Date(Date.UTC(sel[1].getFullYear(),sel[1].getMonth(),sel[1].getDate()));
+    window.__range=[s,e];
+    const ok = isFree(s,e); document.getElementById('availability').innerHTML = ok? '<span class=good>Dagsetningar eru lausar ✔</span>' : '<span class=bad>Skarast við bókaðar dagsetningar</span>';
+    render(calcPrice(s,e));
+    document.getElementById('requestBtn').disabled = !(ok && diffDays(s,e)>0);
+  }
+});
+
+document.getElementById('requestBtn').addEventListener('click', ()=>{
+  const errs=[];
+  if(!window.__range) errs.push('Veldu dagsetningar.');
+  const name=document.getElementById('fullName').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  if(!name) errs.push('Vantar fullt nafn.'); if(!email) errs.push('Vantar netfang.'); if(!phone) errs.push('Vantar símanúmer.');
+  if(!document.getElementById('agree').checked) errs.push('Þú þarft að samþykkja skilmála.');
+  document.getElementById('errors').textContent = errs.join(' ');
+  if(errs.length) return;
+
+  const [s,e]=window.__range; const price=calcPrice(s,e);
+  const params = new URLSearchParams({
+    from: dayKey(s), to: dayKey(e),
+    name, email, phone,
+    children: document.getElementById('children').value,
+    flight: document.getElementById('flight').value.trim(),
+    guests: document.getElementById('guests').value,
+    country: document.getElementById('country').value.trim(),
+    eta: document.getElementById('eta').value.trim(),
+    notes: document.getElementById('notes').value.trim(),
+    total: price.total
+  });
+  // Static Netlify form: fyllum reitina og sendum URL-encoded
+  const set=(id,v)=>document.getElementById(id).value=v;
+  set('f_fullName', name);
+  set('f_email', email);
+  set('f_phone', phone);
+  set('f_children', document.getElementById('children').value);
+  set('f_flight', document.getElementById('flight').value.trim());
+  set('f_country', document.getElementById('country').value.trim());
+  set('f_eta', document.getElementById('eta').value.trim());
+  set('f_dates', dayKey(s)+' → '+dayKey(e));
+  set('f_guests', document.getElementById('guests').value);
+  set('f_nights', price.nights);
+  set('f_lodging', price.lodging);
+  set('f_cleaning', price.cleaning);
+  set('f_discount', price.discount);
+  set('f_total', price.total);
+  set('f_notes', document.getElementById('notes').value.trim());
+  set('f_approvalLink', location.origin + '/approve.html?' + params.toString());
+
+  const form = document.forms['booking'];
+  const fd = new FormData(form);
+  fetch("/", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(fd).toString()
+  })
+  .then(()=>{ window.location.href = "/thanks/"; })
+  .catch(()=>{ const box=document.getElementById('inline-success'); if(box){ box.style.display='block'; scrollTo(0,0);} });
+});
+</script>
+
+<!-- Static Netlify form (detected at deploy) -->
+<form name="booking" method="POST" netlify netlify-honeypot="bot-field" action="/thanks/" hidden>
+  <input type="hidden" name="form-name" value="booking">
+  <input type="text" name="bot-field">
+  <input type="hidden" name="status"       id="f_status" value="pending">
+  <input type="hidden" name="fullName"     id="f_fullName">
+  <input type="hidden" name="email"        id="f_email">
+  <input type="hidden" name="phone"        id="f_phone">
+  <input type="hidden" name="children"     id="f_children">
+  <input type="hidden" name="flight"       id="f_flight">
+  <input type="hidden" name="country"      id="f_country">
+  <input type="hidden" name="eta"          id="f_eta">
+  <input type="hidden" name="dates"        id="f_dates">
+  <input type="hidden" name="guests"       id="f_guests">
+  <input type="hidden" name="nights"       id="f_nights">
+  <input type="hidden" name="lodging"      id="f_lodging">
+  <input type="hidden" name="cleaning"     id="f_cleaning">
+  <input type="hidden" name="discount"     id="f_discount">
+  <input type="hidden" name="total"        id="f_total">
+  <input type="hidden" name="notes"        id="f_notes">
+  <input type="hidden" name="approvalLink" id="f_approvalLink">
+</form>
+</body></html>

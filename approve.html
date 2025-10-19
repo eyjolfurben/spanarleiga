@@ -1,0 +1,24 @@
+<!doctype html><html lang="is"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Samþykki bókunar</title><link rel="stylesheet" href="style.css"><script src="config.js"></script></head><body>
+<nav class="topbar"><a class="brand" href="index.html">La Zenia</a></nav>
+<main class="container"><section class="card"><h1>Samþykkja / Hafna</h1>
+<div id="info" class="small muted"></div>
+<div style="display:flex; gap:10px; margin-top:12px">
+  <button class="btn" id="approve">✅ Samþykkja og skrá í dagatal</button>
+  <button class="btn out" id="reject">Hafna</button>
+</div>
+<div id="result" style="margin-top:10px"></div>
+</section></main>
+<script>
+const qs=new URLSearchParams(location.search);
+const data=Object.fromEntries(qs.entries());
+document.getElementById('info').innerHTML = Object.entries(data).map(([k,v])=>`<div><b>${k}:</b> ${v}</div>`).join('');
+document.getElementById('approve').onclick=async()=>{
+  if(!window.CONFIG||!CONFIG.APPROVAL_ENDPOINT){ alert('APPROVAL_ENDPOINT vantar í config.js'); return; }
+  const payload={action:'approve',...data};
+  const res=await fetch(CONFIG.APPROVAL_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.text()).catch(e=>String(e));
+  document.getElementById('result').innerHTML='<span class="good">Sent ✔</span> '+res;
+};
+document.getElementById('reject').onclick=()=>{ document.getElementById('result').innerHTML='<span class="bad">Hafnað</span>'; };
+</script></body></html>
