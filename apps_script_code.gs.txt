@@ -1,3 +1,72 @@
-// Google Apps Script Web App (deploy as 'Anyone')
-const CALENDAR_ID='0139025d6a6c070428e029d913db214eb14bb67c527d9588416b67afd4efb0aa@group.calendar.google.com';
-function doPost(e){const data=JSON.parse(e.postData.contents||'{}');if(data.action!=='approve')return ContentService.createTextOutput('ignored');const start=new Date(data.from+'T00:00:00Z');const end=new Date(data.to+'T00:00:00Z');const cal=CalendarApp.getCalendarById(CALENDAR_ID);cal.createAllDayEvent('Bókað – '+(data.name||''),start,end,{description:'Gestir: '+(data.guests||'')+'\nNetfang: '+(data.email||'')+'\nSími: '+(data.phone||'')+'\nAth.: '+(data.notes||'')});return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);}
+// == Config ==
+const CALENDAR_ID = '0139025d6a6c070428e029d913db214eb14bb67c527d9588416b67afd4efb0aa@group.calendar.google.com';
+const OWNER_EMAIL = 'spanarleigan@gmail.com';
+
+// Tekur við JSON eða FormData ('payload')
+function doPost(e) {
+  var raw = (e && e.postData && e.postData.contents) ? e.postData.contents : '';
+  var data = {};
+  try { if (raw) data = JSON.parse(raw); } catch(_) {}
+  if ((!data || !data.action) && e && e.parameter && e.parameter.payload) {
+    try { data = JSON.parse(e.parameter.payload); } catch(_) {}
+  }
+  if (!data || !data.action) return text('missing action');
+
+  if (data.action === 'approve') return handleApprove(data);
+  if (data.action === 'request') return handleRequest(data);
+  return text('unknown action');
+}
+
+function handleApprove(d) {
+  const start = new Date(d.from + 'T00:00:00Z');
+  const end   = new Date(d.to   + 'T00:00:00Z');
+  const cal = CalendarApp.getCalendarById(CALENDAR_ID);
+  cal.createAllDayEvent(
+    'Bókað – ' + (d.name || ''),
+    start, end,
+    { description:
+        'Gestir: '   + (d.guests||'') + '\n' +
+        'Netfang: '  + (d.email||'')  + '\n' +
+        'Sími: '     + (d.phone||'')  + '\n' +
+        'Ath.: '     + (d.notes||'')  + '\n' +
+        'Heild: '    + (d.total||'')  + ' €'
+    }
+  );
+  return json({ ok:true, message:'Skráð í dagatal' });
+}
+
+function handleRequest(d) {
+  // Póstur til leigusala
+  const subject = 'NÝ bókunarbeiðni: ' + d.from + ' → ' + d.to;
+  const body =
+    'Ný bókunarbeiðni:\n\n' +
+    'Nafn: ' + d.name + '\n' +
+    'Netfang: ' + d.email + '\n' +
+    'Sími: ' + d.phone + '\n' +
+    'Gestir: ' + d.guests + ' (börn: ' + d.children + ')\n' +
+    'Flugnúmer: ' + (d.flight||'') + '\n' +
+    'Dagsetningar: ' + d.from + ' → ' + d.to + '\n' +
+    'Nætur: ' + d.nights + '\n' +
+    'Húsnæði: ' + d.lodging + ' €\n' +
+    'Þrif: ' + d.cleaning + ' €\n' +
+    'Afsláttur: ' + d.discount + ' €\n' +
+    'Samtals: ' + d.total + ' €\n' +
+    'Athugasemdir: ' + (d.notes||'') + '\n\n' +
+    'Samþykkja bókun: ' + (d.approvalLink || '');
+  MailApp.sendEmail(OWNER_EMAIL, subject, body);
+
+  // Auto-svar til gests
+  if (d.email) {
+    MailApp.sendEmail(
+      d.email,
+      'Takk fyrir bókunarbeiðni – La Zenia',
+      'Takk fyrir bókunarbeiðni! Við förum yfir hana og svörum fljótlega.\n\n' +
+      'Beiðni þín: ' + d.from + ' → ' + d.to + ' | Samtals: ' + d.total + ' €\n\n' +
+      'kv. La Zenia'
+    );
+  }
+  return json({ ok:true, message:'Request received' });
+}
+
+function json(o){ return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function text(s){ return ContentService.createTextOutput(String(s)); }
