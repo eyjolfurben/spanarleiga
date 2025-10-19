@@ -24,37 +24,32 @@
   </main>
 
   <script>
-    const qs   = new URLSearchParams(location.search);
-    const data = Object.fromEntries(qs.entries());
+  const qs   = new URLSearchParams(location.search);
+  const data = Object.fromEntries(qs.entries());
 
-    // Sýnum gögn úr linknum
-    document.getElementById('info').innerHTML =
-      Object.entries(data).map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
+  document.getElementById('info').innerHTML =
+    Object.entries(data).map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
 
-    // Samþykki -> POST á Apps Script
-    document.getElementById('approve').onclick = async () => {
-      // virkar hvort sem CONFIG er skilgreint sem window.CONFIG eða const CONFIG
-      if (typeof CONFIG === 'undefined' || !CONFIG.APPROVAL_ENDPOINT) {
-        alert('APPROVAL_ENDPOINT vantar í config.js'); 
-        return;
-      }
-      const payload = { action: 'approve', ...data };
+  document.getElementById('approve').onclick = async () => {
+    const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
+    if (!EP) { alert('APP_ENDPOINT vantar í config.js'); return; }
 
-      const res = await fetch(CONFIG.APPROVAL_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(r => r.text())
-        .catch(e => String(e));
+    const payload = { action: 'approve', ...data };
 
-      document.getElementById('result').innerHTML =
-        '<span class="good">Sent ✔</span> ' + res;
-    };
+    const res = await fetch(EP, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r=>r.text()).catch(String);
 
-    // Hafna
-    document.getElementById('reject').onclick = () => {
-      document.getElementById('result').innerHTML = '<span class="bad">Hafnað</span>';
-    };
-  </script>
+    document.getElementById('result').innerHTML =
+      '<span class="good">Sent ✔</span> ' + res;
+  };
+
+  document.getElementById('reject').onclick = () => {
+    document.getElementById('result').innerHTML = '<span class="bad">Hafnað</span>';
+  };
+</script>
+
 </body>
 </html>
