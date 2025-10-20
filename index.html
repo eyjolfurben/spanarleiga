@@ -53,14 +53,56 @@
   <button class="lb-next" aria-label="Næsta">›</button>
 </div>
 <script>
-const images = Array.from(document.querySelectorAll('.lightbox img'));
-let ix = 0; const lb = document.getElementById('lb'); const img = document.getElementById('lb-img');
-const openAt = i => { ix=i; img.src=images[ix].src; lb.setAttribute('aria-hidden','false'); };
-images.forEach((im,i)=> im.addEventListener('click',()=>openAt(i)));
-document.querySelector('.lb-close').onclick=()=> lb.setAttribute('aria-hidden','true');
-document.querySelector('.lb-prev').onclick=()=> openAt((ix-1+images.length)%images.length);
-document.querySelector('.lb-next').onclick=()=> openAt((ix+1)%images.length);
-lb.addEventListener('click',e=>{ if(e.target===lb) lb.setAttribute('aria-hidden','true'); });
-addEventListener('keydown',e=>{ if(lb.getAttribute('aria-hidden')==='true') return; if(e.key==='Escape') lb.setAttribute('aria-hidden','true'); if(e.key==='ArrowLeft') document.querySelector('.lb-prev').click(); if(e.key==='ArrowRight') document.querySelector('.lb-next').click(); });
+(() => {
+  const thumbs = Array.from(document.querySelectorAll('.lightbox img'));
+  if (!thumbs.length) return;
+
+  const lb = document.getElementById('lb');
+  const lbImg = document.getElementById('lb-img');
+  const btnPrev = lb.querySelector('.lb-prev');
+  const btnNext = lb.querySelector('.lb-next');
+  const btnClose = lb.querySelector('.lb-close');
+
+  let i = 0, startX = 0;
+
+  const show = (idx) => {
+    i = (idx + thumbs.length) % thumbs.length;
+    const src = thumbs[i].getAttribute('data-full') || thumbs[i].src;
+    lbImg.src = src;
+    lb.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  };
+
+  const hide = () => {
+    lb.classList.add('hidden');
+    document.body.style.overflow = '';
+    lbImg.src = '';
+  };
+
+  thumbs.forEach((img, idx) => {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', () => show(idx));
+  });
+
+  btnPrev.onclick = () => show(i - 1);
+  btnNext.onclick = () => show(i + 1);
+  btnClose.onclick = hide;
+  lb.addEventListener('click', (e) => { if (e.target === lb) hide(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (lb.classList.contains('hidden')) return;
+    if (e.key === 'Escape') hide();
+    if (e.key === 'ArrowLeft') btnPrev.click();
+    if (e.key === 'ArrowRight') btnNext.click();
+  });
+
+  // Touch swipe (mobile)
+  lb.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+  lb.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 30) (dx > 0 ? btnPrev : btnNext).click();
+  });
+})();
 </script>
+
 </body></html>
