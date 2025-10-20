@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8">
+<title>DEBUG submit</title>
+<button id="send">Senda request → /api/submit</button>
+<pre id="out"></pre>
+<script>
+document.getElementById('send').onclick = async () => {
+  const payload = {
+    action: 'request',
+    from: '2025-12-01',
+    to: '2025-12-05',
+    nights: 4, lodging: 520, cleaning: 140, discount: 0, total: 660,
+    name: 'Próf Gestur', email: 'spanarleigan@gmail.com', phone: '+354 555 0000',
+    guests: '2', children: '0', flight: 'FI532', country: 'Ísland', eta: 'Eftir 16',
+    notes: 'DEBUG', approvalLink: location.origin + '/approve.html?from=2025-12-01&to=2025-12-05&name=Próf'
+  };
+  const r = await fetch('/api/submit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const t = await r.text();
+  document.getElementById('out').textContent = 'Status: '+r.status+'\n'+t;
+};
+</script>
