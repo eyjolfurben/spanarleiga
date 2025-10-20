@@ -2,6 +2,15 @@
 <html lang="is">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               img-src 'self' data: https:;
+               style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+               script-src 'self' https://cdn.jsdelivr.net;
+               connect-src 'self' https://spanarleiga.vercel.app;
+               frame-ancestors 'none';
+               base-uri 'self';">
+
   <title>La Zenia – Þakíbúð</title>
   <link rel="stylesheet" href="style.css" />
 </head>
