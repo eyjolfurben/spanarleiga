@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Samþykki bókunar</title>
   <link rel="stylesheet" href="style.css">
-  <script src="/config.js?v=1" defer></script>
 </head>
 <body>
   <nav class="topbar"><a class="brand" href="index.html">La Zenia</a></nav>
@@ -26,22 +25,24 @@
     const qs   = new URLSearchParams(location.search);
     const data = Object.fromEntries(qs.entries());
 
+    // Sýna samantekt
     document.getElementById('info').innerHTML =
       Object.entries(data).map(([k,v]) => `<div><b>${k}:</b> ${v}</div>`).join('');
 
+    // Samþykkja -> POST á Vercel proxy /api/submit (sem talar við Google Apps Script)
     document.getElementById('approve').onclick = async () => {
-      const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
-      if (!EP) { alert('APP_ENDPOINT vantar í config.js'); return; }
       const payload = { action:'approve', ...data };
 
-      const res = await fetch(EP, {
-        method:'POST', headers:{'Content-Type':'application/json'},
+      const res = await fetch('/api/submit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify(payload)
       }).then(r=>r.text()).catch(e=>String(e));
 
-      document.getElementById('result').innerHTML = '<span class="good">Sent ✔</span> ' + res;
+      document.getElementById('result').innerHTML = '<span class="good">Sent ✔</span> ' + (res || '');
     };
 
+    // Hafna (enginn bakendi – bara sjónrænt)
     document.getElementById('reject').onclick = () => {
       document.getElementById('result').innerHTML = '<span class="bad">Hafnað</span>';
     };
