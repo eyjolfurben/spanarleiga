@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="is"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               img-src 'self' data: https:;
+               style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+               script-src 'self' https://cdn.jsdelivr.net;
+               connect-src 'self' https://spanarleiga.vercel.app;
+               frame-ancestors 'none';
+               base-uri 'self';">
+
 <title>Bóka dvöl – La Zenia</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -10,31 +19,58 @@
 <div class="grid-2">
   <div>
     <section class="card" id="box-dates">
-      <h3>1) Dagsetningar</h3>
-      <label>Veldu dagsetningar</label>
-      <input id="dateRange" type="text" placeholder="(21. janúar 2025 – 4. febrúar 2025)">
-      <div class="muted small">Uppteknir dagar eru læstir í dagatalinu.</div>
+    <h3>1) Dagsetningar</h3>
+    <label for="dateRange">Veldu dagsetningar</label>
+    <input id="dateRange" name="dateRange" type="text" placeholder="(21. janúar 2025 – 4. febrúar 2025)" autocomplete="off">
+    <div class="muted small">Uppteknir dagar eru læstir í dagatalinu.</div>
     </section>
+
 
     <section class="card" id="box-info">
       <h3>2) Þínar upplýsingar</h3>
-      <label>Fullt nafn</label><input id="fullName" type="text" placeholder="Fornafn Eftirnafn">
-      <label>Netfang</label><input id="email" type="email" placeholder="þitt@netfang.is">
-      <label>Símanúmer</label><input id="phone" type="tel" placeholder="+354 555 1234">
-      <label>Fjöldi barna (valkvætt)</label>
-      <select id="children"><option value="0" selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
-      <label>Flugnúmer (valkvætt)</label><input id="flight" type="text" placeholder="t.d. FI532">
-      <label>Búsetuland (valkvætt)</label><input id="country" type="text" placeholder="Ísland / ...">
-      <label>Áætlaður komutími (valkvætt)</label><input id="eta" type="text" placeholder="t.d. eftir kl. 16:00">
+    
+      <label for="fullName">Fullt nafn</label>
+      <input id="fullName" name="fullName" type="text" placeholder="Fornafn Eftirnafn" autocomplete="name">
+    
+      <label for="email">Netfang</label>
+      <input id="email" name="email" type="email" placeholder="þitt@netfang.is" autocomplete="email">
+    
+      <label for="phone">Símanúmer</label>
+      <input id="phone" name="phone" type="tel" placeholder="+354 555 1234" autocomplete="tel">
+    
+      <label for="children">Fjöldi barna (valkvætt)</label>
+      <select id="children" name="children" autocomplete="off">
+        <option value="0" selected>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+      </select>
+    
+      <label for="flight">Flugnúmer (valkvætt)</label>
+      <input id="flight" name="flight" type="text" placeholder="t.d. FI532" autocomplete="off">
+    
+      <label for="country">Búsetuland (valkvætt)</label>
+      <input id="country" name="country" type="text" placeholder="Ísland / ..." autocomplete="country-name">
+    
+      <label for="eta">Áætlaður komutími (valkvætt)</label>
+      <input id="eta" name="eta" type="text" placeholder="t.d. eftir kl. 16:00" autocomplete="off">
     </section>
+
 
     <section class="card" id="box-guests">
       <h3>3) Fjöldi gesta</h3>
-      <label>Fjöldi gesta (hámark 5)</label>
-      <select id="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select>
-      <label>Séróskir (valkvætt)</label><textarea id="notes" rows="3" placeholder="T.d. vöggu, seinn check-in, o.s.frv."></textarea>
-      <label class="checkbox"><input type="checkbox" id="agree"><span>Ég samþykki <a href="terms.html" target="_blank">skilmála</a> og staðfesti að upplýsingar séu réttar.</span></label>
+    
+      <label for="guests">Fjöldi gesta (hámark 5)</label>
+      <select id="guests" name="guests" autocomplete="off">
+        <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option>
+      </select>
+    
+      <label for="notes">Séróskir (valkvætt)</label>
+      <textarea id="notes" name="notes" rows="3" placeholder="T.d. vöggu, seinn check-in, o.s.frv." autocomplete="off"></textarea>
+    
+      <label class="checkbox" for="agree">
+        <input type="checkbox" id="agree" name="agree">
+        <span>Ég samþykki <a href="terms.html" target="_blank">skilmála</a> og staðfesti að upplýsingar séu réttar.</span>
+      </label>
     </section>
+
   </div>
 
   <div class="card">
