@@ -178,10 +178,15 @@ document.getElementById('dateRange').addEventListener('change', ()=>{
 document.getElementById('requestBtn').addEventListener('click', async ()=>{
   const errs=[];
   if(!window.__range) errs.push('Veldu dagsetningar.');
-  const name=document.getElementById('fullName').value.trim();
-  const email=document.getElementById('email').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  if(!name) errs.push('Vantar fullt nafn.');
+
+  // ✅ Hér kemur þetta
+  const name   = document.getElementById('fullName').value.trim();
+  const email  = document.getElementById('email').value.trim();
+  const phone  = document.getElementById('phone').value.trim();
+  const guests = document.getElementById('guests').value;
+  const notes  = document.getElementById('notes').value.trim();
+
+  if(!name)  errs.push('Vantar fullt nafn.');
   if(!email) errs.push('Vantar netfang.');
   if(!phone) errs.push('Vantar símanúmer.');
   if(!document.getElementById('agree').checked) errs.push('Þú þarft að samþykkja skilmála.');
