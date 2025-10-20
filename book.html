@@ -188,14 +188,12 @@ document.getElementById('requestBtn').addEventListener('click', async ()=>{
   };
 
   try {
-    const EP = (window.CONFIG && (CONFIG.APP_ENDPOINT || CONFIG.APPROVAL_ENDPOINT));
-    if (!EP) throw new Error('APP_ENDPOINT vantar í config.js');
-    // JSON er í lagi; ef GAS CORS truflar má skipta yfir í FormData + no-cors.
-    await fetch(EP, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    await fetch('/api/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
     });
+  
     window.location.href = '/thanks/';
   } catch (e) {
     console.error(e);
