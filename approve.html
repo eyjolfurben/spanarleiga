@@ -6,7 +6,19 @@
 
   <title>Samþykki bókunar</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- ✅ Þetta leyfir inline-script + google fonts svo approve() virki -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 img-src 'self' data: https:;
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+                 font-src https://fonts.gstatic.com data:;
+                 script-src 'self' 'unsafe-inline';
+                 connect-src 'self';
+                 frame-ancestors 'none';
+                 base-uri 'self';">
 </head>
+
 <body>
   <nav class="topbar"><a class="brand" href="index.html">La Zenia</a></nav>
 
