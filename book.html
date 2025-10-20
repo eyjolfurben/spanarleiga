@@ -100,9 +100,16 @@ const LONG_STAY_NIGHTS = 14;
 const LONG_STAY_DISCOUNT_PCT = 5;
 
 const fp = flatpickr('#dateRange', {
-  mode:'range', minDate:'today', dateFormat:'Y-m-d',
-  locale: 'is', altInput: true, altFormat: 'j. F Y'
+  mode: 'range',
+  minDate: 'today',
+  dateFormat: 'Y-m-d',
+  locale: 'is',
+  altInput: true,
+  altFormat: 'j. F Y',
+  disableMobile: true,   // <- lykilatriði, sýna flatpickr líka á síma
+  static: true           // heldur poppinu innan cards, færri “position bugs”
 });
+
 
 const euro=n=> new Intl.NumberFormat('is-IS',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(Math.round(n));
 const dayKey = d => d.toISOString().slice(0,10);
